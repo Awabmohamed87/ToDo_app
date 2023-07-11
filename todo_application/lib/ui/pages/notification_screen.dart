@@ -44,8 +44,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ),
         backgroundColor: context.theme.colorScheme.background,
-        title: Text(_payload.toString().split('|')[0],
-            style: MyTheme().headingStyle),
+        title: Text(_payload.toString().split('|')[0], style: headingStyle),
       ),
       body: SafeArea(
         child: Column(

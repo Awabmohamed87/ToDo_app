@@ -5,7 +5,7 @@ import 'package:todo_application/ui/theme.dart';
 
 import 'ui/pages/home_page.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
 }
 

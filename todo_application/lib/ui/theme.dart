@@ -13,7 +13,7 @@ class MyTheme {
 
   static final light = ThemeData(
     colorScheme: ColorScheme.fromSwatch().copyWith(
-        background: primaryClr,
+        background: Colors.white,
         primary: primaryClr,
         brightness: Brightness.light),
   );
@@ -23,12 +23,39 @@ class MyTheme {
         primary: darkGreyClr,
         brightness: Brightness.dark),
   );
-  TextStyle get headingStyle {
-    return GoogleFonts.lato(
-        textStyle: TextStyle(
-      color: Get.isDarkMode ? Colors.white : darkGreyClr,
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-    ));
-  }
+}
+
+TextStyle get headingStyle {
+  return GoogleFonts.lato(
+      textStyle: TextStyle(
+    color: Get.isDarkMode ? Colors.white : MyTheme.darkGreyClr,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+  ));
+}
+
+TextStyle get subHeadingStyle {
+  return GoogleFonts.lato(
+      textStyle: TextStyle(
+    color: Get.isDarkMode ? Colors.white : MyTheme.darkGreyClr,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+  ));
+}
+
+TextStyle get titleStyle {
+  return GoogleFonts.lato(
+      textStyle: TextStyle(
+    color: Get.isDarkMode ? Colors.white : Colors.black,
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+  ));
+}
+
+TextStyle get subTitleStyle {
+  return GoogleFonts.lato(
+      textStyle: TextStyle(
+    color: Get.isDarkMode ? Colors.white : Colors.black,
+    fontSize: 16,
+  ));
 }
