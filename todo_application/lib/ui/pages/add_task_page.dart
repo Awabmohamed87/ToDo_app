@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_application/controllers/task_controller.dart';
+import 'package:todo_application/models/task.dart';
 import 'package:todo_application/ui/theme.dart';
 import 'package:todo_application/ui/widgets/button.dart';
 import 'package:todo_application/ui/widgets/input_field.dart';
@@ -59,7 +60,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 controller: _noteController),
             InputField(
               child: IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  _getDateFromUser();
+                },
                 icon: const Icon(
                   Icons.calendar_today_outlined,
                   color: Colors.grey,
@@ -76,7 +79,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   label: 'Start Time',
                   note: _startTime,
                   child: IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _getTimeFromUser(isStartTime: true);
+                    },
                     icon: const Icon(
                       Icons.access_time_outlined,
                       color: Colors.grey,
@@ -89,7 +94,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   label: 'End Time',
                   note: _endTime,
                   child: IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _getTimeFromUser(isStartTime: false);
+                    },
                     icon: const Icon(
                       Icons.access_time_outlined,
                       color: Colors.grey,
@@ -185,7 +192,11 @@ class _AddTaskPageState extends State<AddTaskPage> {
                                   )))
                     ],
                   ),
-                  MyButton(label: 'Create Task', onTap: () {}),
+                  MyButton(
+                      label: 'Create Task',
+                      onTap: () async {
+                        _validateData();
+                      }),
                 ],
               ),
             ),
@@ -193,6 +204,42 @@ class _AddTaskPageState extends State<AddTaskPage> {
         ),
       ),
     );
+  }
+
+  createSnackBox(title, content) {
+    return Get.snackbar(
+      title,
+      content,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.white,
+      icon: const Icon(Icons.warning),
+      colorText: MyTheme.pinkClr,
+    );
+  }
+
+  _validateData() async {
+    if (_titleController.text.isEmpty) {
+      createSnackBox('Required!!', "Title can't be empty");
+      return;
+    }
+    if (_noteController.text.isEmpty) {
+      createSnackBox('Required!!', "Note can't be empty");
+      return;
+    }
+    Task task = Task(
+        id: 0,
+        title: _titleController.text,
+        note: _noteController.text,
+        isCompleted: 0,
+        date: DateFormat.yMd().format(_selectedDate),
+        startTime: _startTime,
+        endTime: _endTime,
+        color: _selectedColor,
+        remind: _selectedRemind,
+        repeat: _selectedRepeat);
+
+    await taskController.addTask(task);
+    Get.back();
   }
 
   AppBar _appBar() {
@@ -216,5 +263,30 @@ class _AddTaskPageState extends State<AddTaskPage> {
         SizedBox(width: 10),
       ],
     );
+  }
+
+  void _getTimeFromUser({required bool isStartTime}) async {
+    TimeOfDay? _pickedTime =
+        await showTimePicker(context: context, initialTime: TimeOfDay.now());
+
+    setState(() {
+      if (_pickedTime != null) {
+        if (isStartTime)
+          _startTime = _pickedTime.format(context).toString();
+        else
+          _endTime = _pickedTime.format(context).toString();
+      }
+    });
+  }
+
+  void _getDateFromUser() async {
+    DateTime? _pickedDate = await showDatePicker(
+        context: context,
+        initialDate: _selectedDate,
+        firstDate: DateTime(2021),
+        lastDate: DateTime(2100));
+    setState(() {
+      if (_pickedDate != null) _selectedDate = _pickedDate;
+    });
   }
 }

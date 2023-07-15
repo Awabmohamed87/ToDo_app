@@ -59,3 +59,37 @@ TextStyle get subTitleStyle {
     fontSize: 16,
   ));
 }
+
+TextStyle get sideTaskStyle {
+  return GoogleFonts.lato(
+      textStyle: const TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+    fontSize: 10,
+  ));
+}
+
+TextStyle get titleTaskStyle {
+  return GoogleFonts.lato(
+      textStyle: const TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+    fontSize: 16,
+  ));
+}
+
+TextStyle get timeTaskStyle {
+  return GoogleFonts.lato(
+      textStyle: TextStyle(
+    color: Colors.grey[100],
+    fontSize: 13,
+  ));
+}
+
+TextStyle get noteTaskStyle {
+  return GoogleFonts.lato(
+      textStyle: TextStyle(
+    color: Colors.grey[100],
+    fontSize: 15,
+  ));
+}
