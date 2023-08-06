@@ -224,7 +224,7 @@ class _HomePageState extends State<HomePage> {
                 Get.back();
               });
             },
-            clr: MyTheme.primaryClr,
+            clr: Colors.red[300]!,
           ),
           Divider(
             color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
