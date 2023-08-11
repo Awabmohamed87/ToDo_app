@@ -243,38 +243,48 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _showTasks() {
-    return _taskController.tasksList.toList().isEmpty
+    final tasks = _taskController.tasksList.toList();
+    return tasks.isEmpty
         ? _noTasksMsg()
         : Expanded(
             child: Obx(
-            () => ListView.builder(
-              scrollDirection: SizeConfig.orientation == Orientation.portrait
-                  ? Axis.vertical
-                  : Axis.horizontal,
-              itemBuilder: ((context, index) {
-                return AnimationConfiguration.staggeredList(
-                  position: index,
-                  duration: const Duration(milliseconds: 500),
-                  child: SlideAnimation(
-                    horizontalOffset: 300,
-                    child: FadeInAnimation(
-                      child: GestureDetector(
-                        child: TaskTile(
-                            task: _taskController.tasksList.toList()[index]),
-                        onTap: () {
-                          setState(() {
-                            _showBottomSheet(context,
-                                _taskController.tasksList.toList()[index]);
-                          });
-                        },
+              () => ListView.builder(
+                scrollDirection: SizeConfig.orientation == Orientation.portrait
+                    ? Axis.vertical
+                    : Axis.horizontal,
+                itemBuilder: ((context, index) {
+                  final task = _taskController.tasksList[index];
+                  var hour = task.startTime.toString().split(':')[0];
+                  var minutes =
+                      task.startTime.toString().split(':')[1].split(' ')[0];
+                  var tmp =
+                      task.startTime.toString().split(':')[1].split(' ')[0];
+                  notifyHelper.scheduledNotification(
+                      tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
+                      int.parse(minutes),
+                      task);
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 500),
+                    child: SlideAnimation(
+                      horizontalOffset: 300,
+                      child: FadeInAnimation(
+                        child: GestureDetector(
+                          child: TaskTile(task: task),
+                          onTap: () {
+                            setState(() {
+                              _showBottomSheet(context, task);
+                            });
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
-              itemCount: _taskController.tasksList.toList().length,
+                  );
+                }),
+                itemCount: _taskController.tasksList.toList().length,
+              ),
             ),
-          ));
+          );
   }
 
   Widget _noTasksMsg() {

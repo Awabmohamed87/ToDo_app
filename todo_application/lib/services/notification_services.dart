@@ -74,20 +74,30 @@ class NotifyHelper {
   }
 
   scheduledNotification(int hour, int minutes, Task task) async {
+    print(hour);
+    print(minutes);
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      task.id!,
-      task.title,
-      task.note,
-      _nextInstanceOfTenAM(hour, minutes),
-      const NotificationDetails(
-        android:
-            AndroidNotificationDetails('your channel id', 'your channel name'),
-      ),
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-      payload: '${task.title}|${task.note}|${task.startTime}|',
-    );
+        task.id!,
+        task.title,
+        task.note,
+        _nextInstanceOfTenAM(hour, minutes),
+        const NotificationDetails(
+          android: AndroidNotificationDetails('main_channel', 'Main Channel',
+              channelDescription: 'ashwin',
+              importance: Importance.max,
+              priority: Priority.max),
+          iOS: DarwinNotificationDetails(
+            sound: 'default.wav',
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: '${task.title}|${task.note}|${task.startTime}|',
+        androidAllowWhileIdle: true);
   }
 
   void requestAndroidPermission() {
@@ -118,9 +128,11 @@ class NotifyHelper {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =
         tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minutes);
+    print(now);
     if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+      scheduledDate = scheduledDate.add(const Duration(days: 0));
     }
+    print(scheduledDate);
     return scheduledDate;
   }
 
