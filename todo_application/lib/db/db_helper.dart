@@ -11,7 +11,6 @@ class DBHelper {
     if (_db == null) {
       try {
         String _path = getDatabasesPath().toString() + 'local_task_db.db';
-        print(_path);
         // open the database
         _db = await openDatabase(_path, version: _version,
             onCreate: (Database db, int version) async {
@@ -23,18 +22,17 @@ class DBHelper {
               ' date TEXT, startTime TEXT, endTime TEXT, repeat TEXT)');
         });
       } catch (e) {
-        print(e);
+        rethrow;
       }
     }
   }
 
   static Future<int> insert(Task task) async {
-    print('inside insert');
     // Insert some records in a transaction
     return await _db!.insert(_tableName, {
       'title': task.title,
       'note': task.note,
-      'color': task.color,
+      'color': task.color!.value,
       'isCompleted': task.isCompleted,
       'remind': task.remind,
       'date': task.date,

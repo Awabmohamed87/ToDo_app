@@ -7,10 +7,8 @@ import '../size_config.dart';
 // ignore: must_be_immutable
 class TaskTile extends StatelessWidget {
   final Task task;
-  TaskTile({Key? key, required this.task}) : super(key: key);
+  const TaskTile({Key? key, required this.task}) : super(key: key);
 
-  List<Color> colors = [MyTheme.primaryClr, MyTheme.pinkClr, MyTheme.orangeClr];
-  Color _getColor(index) => colors[index];
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -24,8 +22,7 @@ class TaskTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: _getColor(task.color)),
+            borderRadius: BorderRadius.circular(16), color: task.color),
         child: Row(
           children: [
             Expanded(
@@ -50,6 +47,10 @@ class TaskTile extends StatelessWidget {
                         ),
                         Text(
                           '${task.startTime} - ${task.endTime}',
+                          style: timeTaskStyle,
+                        ),
+                        Text(
+                          ' - ${task.repeat}',
                           style: timeTaskStyle,
                         )
                       ],

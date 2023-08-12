@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Task {
   int? id;
   String? title;
@@ -6,7 +8,7 @@ class Task {
   String? date;
   String? startTime;
   String? endTime;
-  int? color;
+  Color? color;
   int? remind;
   String? repeat;
   Task(

@@ -25,6 +25,7 @@ dependencies:
   flutter_staggered_animations: ^1.0.0
   flutter_svg: ^2.0.7
   rxdart: ^0.27.2
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   flutter_test:

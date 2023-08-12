@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_application/controllers/task_controller.dart';
@@ -8,7 +9,8 @@ import 'package:todo_application/ui/widgets/button.dart';
 import 'package:todo_application/ui/widgets/input_field.dart';
 
 class AddTaskPage extends StatefulWidget {
-  const AddTaskPage({Key? key}) : super(key: key);
+  final DateTime selectedDate;
+  const AddTaskPage(this.selectedDate, {Key? key}) : super(key: key);
 
   @override
   State<AddTaskPage> createState() => _AddTaskPageState();
@@ -19,21 +21,26 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
+  Color pickerColor = Colors.grey[400]!;
+  late DateTime _selectedDate;
 
-  DateTime _selectedDate = DateTime.now();
   String _startTime = DateFormat('hh:mm a').format(DateTime.now()).toString();
   String _endTime = DateFormat('hh:mm a')
       .format(DateTime.now().add(const Duration(minutes: 15)))
       .toString();
 
-  int _selectedRemind = 5;
-  List<int> remindList = [5, 10, 15, 20];
+  int _selectedRemind = 0;
+  List<int> remindList = [0, 5, 10, 15, 20];
   String _selectedRepeat = 'None';
   List<String> repeatList = ['None', 'Daily', 'Weekly', 'Monthly'];
 
-  int _selectedColor = 0;
-
-  List<Color> colors = [MyTheme.primaryClr, MyTheme.pinkClr, MyTheme.orangeClr];
+  int _selectedColorIndex = 0;
+  Color? _selectedColor = MyTheme.colors[0];
+  @override
+  void initState() {
+    _selectedDate = widget.selectedDate;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,35 +168,61 @@ class _AddTaskPageState extends State<AddTaskPage> {
                         style: titleStyle,
                       ),
                       Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(
-                              3,
-                              (index) => Padding(
-                                    padding: const EdgeInsets.only(right: 5),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedColor = index;
-                                        });
-                                      },
-                                      child: Container(
-                                        width: 30,
-                                        height: 30,
-                                        child: _selectedColor == index
-                                            ? const Icon(
-                                                Icons.done,
-                                                size: 24,
-                                                color: Colors.white,
-                                                weight: 1200,
-                                              )
-                                            : Container(),
-                                        decoration: BoxDecoration(
-                                            color: colors[index],
-                                            borderRadius:
-                                                BorderRadius.circular(50)),
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          createColorButton(0),
+                          createColorButton(1),
+                          createColorButton(2),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                        title: const Text('Pick a color!'),
+                                        content: SingleChildScrollView(
+                                          child: ColorPicker(
+                                            pickerColor: pickerColor,
+                                            onColorChanged: (newColor) {
+                                              setState(() {
+                                                pickerColor = newColor;
+                                              });
+                                              MyTheme.colors.add(pickerColor);
+                                              _selectedColor = pickerColor;
+                                            },
+                                          ),
+                                        )));
+                                setState(() {
+                                  _selectedColorIndex = 3;
+                                });
+                              },
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                child: _selectedColorIndex == 3
+                                    ? const Icon(
+                                        Icons.done,
+                                        size: 24,
+                                        color: Colors.white,
+                                        weight: 1200,
+                                      )
+                                    : const Center(
+                                        child: Text(
+                                          '...',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                        ),
                                       ),
-                                    ),
-                                  )))
+                                decoration: BoxDecoration(
+                                    color: pickerColor,
+                                    borderRadius: BorderRadius.circular(50)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
                     ],
                   ),
                   MyButton(
@@ -205,6 +238,33 @@ class _AddTaskPageState extends State<AddTaskPage> {
       ),
     );
   }
+
+  createColorButton(index) => Padding(
+        padding: const EdgeInsets.only(right: 5),
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedColorIndex = index;
+            });
+            _selectedColor = MyTheme.colors[_selectedColorIndex];
+          },
+          child: Container(
+            width: 30,
+            height: 30,
+            child: _selectedColorIndex == index
+                ? const Icon(
+                    Icons.done,
+                    size: 24,
+                    color: Colors.white,
+                    weight: 1200,
+                  )
+                : Container(),
+            decoration: BoxDecoration(
+                color: MyTheme.colors[index],
+                borderRadius: BorderRadius.circular(50)),
+          ),
+        ),
+      );
 
   createSnackBox(title, content) {
     return Get.snackbar(
@@ -231,7 +291,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
         title: _titleController.text,
         note: _noteController.text,
         isCompleted: 0,
-        date: DateFormat.yMd().format(_selectedDate),
+        date: DateFormat.yMMMEd().format(_selectedDate),
         startTime: _startTime,
         endTime: _endTime,
         color: _selectedColor,

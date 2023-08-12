@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:date_picker_timeline/date_picker_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -31,10 +33,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     notifyHelper = NotifyHelper();
-    notifyHelper.requestAndroidPermission();
+    if (Platform.isIOS)
+      notifyHelper.requestIOSPermissions();
+    else if (Platform.isAndroid) notifyHelper.requestAndroidPermission();
     notifyHelper.initializeNotification();
     _taskController.getTasks(
-        selectedDate: DateFormat.yMd().format(_selectedDate));
+        selectedDate: DateFormat.yMMMEd().format(_selectedDate));
   }
 
   @override
@@ -42,7 +46,7 @@ class _HomePageState extends State<HomePage> {
     SizeConfig().init(context);
 
     _taskController.getTasks(
-        selectedDate: DateFormat.yMd().format(_selectedDate));
+        selectedDate: DateFormat.yMMMEd().format(_selectedDate));
     return Scaffold(
       backgroundColor: context.theme.colorScheme.background,
       appBar: _appBar(),
@@ -68,10 +72,6 @@ class _HomePageState extends State<HomePage> {
         ),
         onPressed: () {
           ThemeServices().switchTheme();
-
-          notifyHelper.displayNotification(
-              title: 'Notification', body: 'This is your first notification');
-          //Get.to(const NotificationScreen(payload: 'payload|payload|payload'));
         },
       ),
       actions: const [
@@ -99,7 +99,9 @@ class _HomePageState extends State<HomePage> {
               ),
               Text(
                   DateFormat.E().format(_selectedDate) ==
-                          DateFormat.E().format(DateTime.now())
+                              DateFormat.E().format(DateTime.now()) &&
+                          DateTime.now().day == _selectedDate.day &&
+                          DateTime.now().month == _selectedDate.month
                       ? 'Today'
                       : DateFormat.E().format(_selectedDate),
                   style: headingStyle),
@@ -108,9 +110,9 @@ class _HomePageState extends State<HomePage> {
           MyButton(
               label: '+ Add Task',
               onTap: () async {
-                await Get.to(() => const AddTaskPage());
+                await Get.to(() => AddTaskPage(_selectedDate));
                 _taskController.getTasks(
-                    selectedDate: DateFormat.yMd().format(_selectedDate));
+                    selectedDate: DateFormat.yMMMEd().format(_selectedDate));
               }),
         ],
       ),
@@ -129,7 +131,7 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             _selectedDate = newDate;
             _taskController.getTasks(
-                selectedDate: DateFormat.yMd().format(_selectedDate));
+                selectedDate: DateFormat.yMMMEd().format(_selectedDate));
           });
         },
         dayTextStyle: const TextStyle(
@@ -243,29 +245,30 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _showTasks() {
-    final tasks = _taskController.tasksList.toList();
+    final RxList<Task> tasks = _taskController.tasksList;
     return tasks.isEmpty
         ? _noTasksMsg()
         : Expanded(
             child: Obx(
               () => ListView.builder(
+                itemCount: tasks.length,
                 scrollDirection: SizeConfig.orientation == Orientation.portrait
                     ? Axis.vertical
                     : Axis.horizontal,
                 itemBuilder: ((context, index) {
-                  final task = _taskController.tasksList[index];
+                  final task = tasks[index];
                   var hour = task.startTime.toString().split(':')[0];
                   var minutes =
                       task.startTime.toString().split(':')[1].split(' ')[0];
                   var tmp =
-                      task.startTime.toString().split(':')[1].split(' ')[0];
+                      task.startTime.toString().split(':')[1].split(' ')[1];
                   notifyHelper.scheduledNotification(
                       tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
                       int.parse(minutes),
                       task);
                   return AnimationConfiguration.staggeredList(
                     position: index,
-                    duration: const Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 300),
                     child: SlideAnimation(
                       horizontalOffset: 300,
                       child: FadeInAnimation(
@@ -281,7 +284,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 }),
-                itemCount: _taskController.tasksList.toList().length,
               ),
             ),
           );
