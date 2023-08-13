@@ -1,12 +1,16 @@
 import 'dart:io';
 
 import 'package:date_picker_timeline/date_picker_timeline.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:todo_application/controllers/task_controller.dart';
+import 'package:todo_application/services/image_services.dart';
 import 'package:todo_application/services/notification_services.dart';
 import 'package:todo_application/services/theme_services.dart';
 import 'package:todo_application/ui/pages/add_task_page.dart';
@@ -25,9 +29,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TaskController _taskController = TaskController();
   DateTime _selectedDate = DateTime.now();
   late NotifyHelper notifyHelper;
+  bool isPressed = false;
+  final _image = 'images/person.jpeg';
+  final ImagePicker picker = ImagePicker();
+  // ignore: prefer_typing_uninitialized_variables
+  var newImage;
 
   @override
   void initState() {
@@ -37,16 +45,16 @@ class _HomePageState extends State<HomePage> {
       notifyHelper.requestIOSPermissions();
     else if (Platform.isAndroid) notifyHelper.requestAndroidPermission();
     notifyHelper.initializeNotification();
-    _taskController.getTasks(
-        selectedDate: DateFormat.yMMMEd().format(_selectedDate));
+    if (ImageServices().profileImagePath != '')
+      newImage = File(ImageServices().profileImagePath);
+    Provider.of<TaskController>(context, listen: false)
+        .getTasks(selectedDate: DateFormat.yMMMEd().format(_selectedDate));
   }
 
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
 
-    _taskController.getTasks(
-        selectedDate: DateFormat.yMMMEd().format(_selectedDate));
     return Scaffold(
       backgroundColor: context.theme.colorScheme.background,
       appBar: _appBar(),
@@ -55,7 +63,7 @@ class _HomePageState extends State<HomePage> {
           _createTaskBar(),
           _createDateBar(),
           const SizedBox(height: 8),
-          _showTasks(),
+          _showTasks()
         ],
       ),
     );
@@ -74,13 +82,128 @@ class _HomePageState extends State<HomePage> {
           ThemeServices().switchTheme();
         },
       ),
-      actions: const [
-        CircleAvatar(
-          backgroundImage: AssetImage('images/person.jpeg'),
-          radius: 15,
+      actions: [
+        GestureDetector(
+          onTap: () {
+            Get.bottomSheet(SingleChildScrollView(
+              child: Container(
+                color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
+                padding: const EdgeInsets.only(top: 5),
+                height: SizeConfig.screenHeight * 0.35,
+                child: Column(
+                  children: [
+                    Flexible(
+                      child: Container(
+                        height: 6,
+                        width: 120,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Get.isDarkMode
+                              ? Colors.grey[600]
+                              : Colors.grey[300],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Stack(
+                      alignment: AlignmentDirectional.bottomCenter,
+                      children: [
+                        Center(
+                          child: buildCircleAvatar(
+                              newImage == null
+                                  ? AssetImage(_image)
+                                  : FileImage(newImage),
+                              SizeConfig.screenWidth * 0.2),
+                        ),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton2(
+                              iconStyleData: IconStyleData(
+                                icon: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                      color: Colors.grey[350],
+                                      borderRadius: BorderRadius.circular(20)),
+                                  child: const Icon(
+                                    Icons.edit,
+                                  ),
+                                ),
+                                iconSize: 25,
+                                iconEnabledColor: Colors.black,
+                              ),
+                              alignment: Alignment.bottomRight,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 1,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.camera_alt_outlined),
+                                      SizedBox(width: 5),
+                                      Text('Camera')
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 2,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons
+                                          .photo_size_select_actual_rounded),
+                                      SizedBox(width: 5),
+                                      Text('Gallery')
+                                    ],
+                                  ),
+                                )
+                              ],
+                              onChanged: (newItem) async {
+                                final pickedImageFile = await picker.pickImage(
+                                    source: newItem == 1
+                                        ? ImageSource.camera
+                                        : ImageSource.gallery,
+                                    imageQuality: 50,
+                                    maxHeight: 300,
+                                    maxWidth: 300);
+                                if (pickedImageFile != null) {
+                                  setState(() {
+                                    newImage = File(pickedImageFile.path);
+                                  });
+                                  ImageServices()
+                                      .saveThemeToBox(pickedImageFile.path);
+                                }
+                                Navigator.of(context).pop();
+                              }),
+                        ),
+                        if (isPressed)
+                          Container(
+                            height: 20,
+                            width: 20,
+                            color: Colors.red,
+                          )
+                      ],
+                    ),
+                    const TextField(
+                      decoration: InputDecoration(),
+                    ),
+                    const SizedBox(height: 10)
+                  ],
+                ),
+              ),
+            ));
+          },
+          child: buildCircleAvatar(
+              newImage == null ? AssetImage(_image) : FileImage(newImage),
+              15.0),
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
       ],
+    );
+  }
+
+  CircleAvatar buildCircleAvatar(image, radius) {
+    return CircleAvatar(
+      backgroundColor: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
+      backgroundImage: image,
+      radius: radius,
     );
   }
 
@@ -101,7 +224,8 @@ class _HomePageState extends State<HomePage> {
                   DateFormat.E().format(_selectedDate) ==
                               DateFormat.E().format(DateTime.now()) &&
                           DateTime.now().day == _selectedDate.day &&
-                          DateTime.now().month == _selectedDate.month
+                          DateTime.now().month == _selectedDate.month &&
+                          DateTime.now().year == _selectedDate.year
                       ? 'Today'
                       : DateFormat.E().format(_selectedDate),
                   style: headingStyle),
@@ -111,7 +235,7 @@ class _HomePageState extends State<HomePage> {
               label: '+ Add Task',
               onTap: () async {
                 await Get.to(() => AddTaskPage(_selectedDate));
-                _taskController.getTasks(
+                Provider.of<TaskController>(context, listen: false).getTasks(
                     selectedDate: DateFormat.yMMMEd().format(_selectedDate));
               }),
         ],
@@ -130,7 +254,7 @@ class _HomePageState extends State<HomePage> {
         onDateChange: (newDate) {
           setState(() {
             _selectedDate = newDate;
-            _taskController.getTasks(
+            Provider.of<TaskController>(context, listen: false).getTasks(
                 selectedDate: DateFormat.yMMMEd().format(_selectedDate));
           });
         },
@@ -197,94 +321,95 @@ class _HomePageState extends State<HomePage> {
                 ? SizeConfig.screenHeight * 0.25
                 : SizeConfig.screenHeight * 0.35,
         color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
-        child: Column(children: [
-          Flexible(
-              child: Container(
-            height: 6,
-            width: 120,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: Get.isDarkMode ? Colors.grey[600] : Colors.grey[300],
+        child: Column(
+          children: [
+            Flexible(
+                child: Container(
+              height: 6,
+              width: 120,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Get.isDarkMode ? Colors.grey[600] : Colors.grey[300],
+              ),
+            )),
+            task.isCompleted == 0
+                ? _buildBottomSheet(
+                    label: 'Mark as completed',
+                    onTap: () {
+                      setState(() {
+                        Provider.of<TaskController>(context, listen: false)
+                            .updateTask(task.id!);
+                        Get.back();
+                      });
+                    },
+                    clr: MyTheme.primaryClr)
+                : Container(),
+            _buildBottomSheet(
+              label: 'Delete',
+              onTap: () {
+                setState(() {
+                  Provider.of<TaskController>(context, listen: false)
+                      .deleteTask(task.id!);
+                  Get.back();
+                });
+              },
+              clr: Colors.red[300]!,
             ),
-          )),
-          task.isCompleted == 0
-              ? _buildBottomSheet(
-                  label: 'Mark as completed',
-                  onTap: () {
-                    setState(() {
-                      _taskController.updateTask(task.id!);
-                      Get.back();
-                    });
-                  },
-                  clr: MyTheme.primaryClr)
-              : Container(),
-          _buildBottomSheet(
-            label: 'Delete',
-            onTap: () {
-              setState(() {
-                _taskController.deleteTask(task.id!);
+            Divider(
+              color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
+            ),
+            _buildBottomSheet(
+              label: 'Cancel',
+              onTap: () {
                 Get.back();
-              });
-            },
-            clr: Colors.red[300]!,
-          ),
-          Divider(
-            color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
-          ),
-          _buildBottomSheet(
-            label: 'Cancel',
-            onTap: () {
-              Get.back();
-            },
-            clr: MyTheme.primaryClr,
-          ),
-          const SizedBox(height: 20),
-        ]),
+              },
+              clr: MyTheme.primaryClr,
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     ));
   }
 
   Widget _showTasks() {
-    final RxList<Task> tasks = _taskController.tasksList;
-    return tasks.isEmpty
+    return Provider.of<TaskController>(context).tasksList.isEmpty
         ? _noTasksMsg()
         : Expanded(
-            child: Obx(
-              () => ListView.builder(
-                itemCount: tasks.length,
-                scrollDirection: SizeConfig.orientation == Orientation.portrait
-                    ? Axis.vertical
-                    : Axis.horizontal,
-                itemBuilder: ((context, index) {
-                  final task = tasks[index];
-                  var hour = task.startTime.toString().split(':')[0];
-                  var minutes =
-                      task.startTime.toString().split(':')[1].split(' ')[0];
-                  var tmp =
-                      task.startTime.toString().split(':')[1].split(' ')[1];
-                  notifyHelper.scheduledNotification(
-                      tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
-                      int.parse(minutes),
-                      task);
-                  return AnimationConfiguration.staggeredList(
-                    position: index,
-                    duration: const Duration(milliseconds: 300),
-                    child: SlideAnimation(
-                      horizontalOffset: 300,
-                      child: FadeInAnimation(
-                        child: GestureDetector(
-                          child: TaskTile(task: task),
-                          onTap: () {
-                            setState(() {
-                              _showBottomSheet(context, task);
-                            });
-                          },
-                        ),
+            child: ListView.builder(
+              itemCount: Provider.of<TaskController>(context).tasksList.length,
+              scrollDirection: SizeConfig.orientation == Orientation.portrait
+                  ? Axis.vertical
+                  : Axis.horizontal,
+              itemBuilder: ((context, index) {
+                final task =
+                    Provider.of<TaskController>(context).tasksList[index];
+                var hour = task.startTime.toString().split(':')[0];
+                var minutes =
+                    task.startTime.toString().split(':')[1].split(' ')[0];
+                var tmp = task.startTime.toString().split(':')[1].split(' ')[1];
+                notifyHelper.scheduledNotification(
+                    tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
+                    int.parse(minutes),
+                    task);
+                return AnimationConfiguration.staggeredList(
+                  position: index,
+                  duration: const Duration(milliseconds: 300),
+                  child: SlideAnimation(
+                    horizontalOffset: 300,
+                    child: FadeInAnimation(
+                      child: GestureDetector(
+                        child: TaskTile(task: task),
+                        onTap: () {
+                          setState(() {
+                            _showBottomSheet(context, task);
+                          });
+                        },
                       ),
                     ),
-                  );
-                }),
-              ),
+                  ),
+                );
+              }),
             ),
           );
   }
@@ -295,7 +420,7 @@ class _HomePageState extends State<HomePage> {
         duration: const Duration(seconds: 3),
         child: RefreshIndicator(
           onRefresh: () async {
-            _taskController.getTasks();
+            Provider.of<TaskController>(context, listen: false).getTasks();
           },
           child: SingleChildScrollView(
             child: Wrap(

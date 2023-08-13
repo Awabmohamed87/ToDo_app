@@ -80,9 +80,11 @@ class NotifyHelper {
         task.note,
         _nextInstanceOfTenAM(hour, minutes, task.remind!),
         const NotificationDetails(
-          android: AndroidNotificationDetails('main_channel', 'Main Channel',
+          android: AndroidNotificationDetails('your_channel_id', 'Main Channel',
               channelDescription: 'ashwin',
               importance: Importance.max,
+              playSound: true,
+              visibility: NotificationVisibility.public,
               priority: Priority.max),
           iOS: DarwinNotificationDetails(
             sound: 'default.wav',
