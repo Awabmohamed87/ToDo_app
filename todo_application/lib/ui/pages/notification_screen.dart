@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo_application/ui/theme.dart';
 
+import '../../services/name_services.dart';
+
 class NotificationScreen extends StatefulWidget {
   final String payload;
   const NotificationScreen({Key? key, required this.payload}) : super(key: key);
@@ -53,7 +55,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             Column(
               children: [
                 Text(
-                  'Hi, Awab',
+                  'Hi, ${NameServices().name}',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 28,

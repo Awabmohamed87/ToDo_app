@@ -83,6 +83,15 @@ TextStyle get titleTaskStyle {
   ));
 }
 
+TextStyle get holderStyle {
+  return GoogleFonts.lato(
+      textStyle: TextStyle(
+    color: Get.isDarkMode ? Colors.white : Colors.grey[600],
+    fontWeight: FontWeight.bold,
+    fontSize: 16,
+  ));
+}
+
 TextStyle get timeTaskStyle {
   return GoogleFonts.lato(
       textStyle: TextStyle(

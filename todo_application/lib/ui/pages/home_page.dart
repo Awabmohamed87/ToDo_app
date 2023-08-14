@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_application/controllers/task_controller.dart';
 import 'package:todo_application/services/image_services.dart';
+import 'package:todo_application/services/name_services.dart';
 import 'package:todo_application/services/notification_services.dart';
 import 'package:todo_application/services/theme_services.dart';
 import 'package:todo_application/ui/pages/add_task_page.dart';
@@ -36,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   final ImagePicker picker = ImagePicker();
   // ignore: prefer_typing_uninitialized_variables
   var newImage;
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
@@ -85,6 +87,9 @@ class _HomePageState extends State<HomePage> {
       actions: [
         GestureDetector(
           onTap: () {
+            setState(() {
+              _controller.text = NameServices().name;
+            });
             Get.bottomSheet(SingleChildScrollView(
               child: Container(
                 color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
@@ -104,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 10),
                     Stack(
                       alignment: AlignmentDirectional.bottomCenter,
                       children: [
@@ -173,16 +178,48 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.of(context).pop();
                               }),
                         ),
-                        if (isPressed)
-                          Container(
-                            height: 20,
-                            width: 20,
-                            color: Colors.red,
-                          )
                       ],
                     ),
-                    const TextField(
-                      decoration: InputDecoration(),
+                    const SizedBox(height: 15),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: SizeConfig.screenWidth * 0.25),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              textAlign: TextAlign.center,
+                              decoration: InputDecoration(
+                                labelStyle: holderStyle,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: SizeConfig.screenWidth * 0.03),
+                                labelText: 'Name',
+                                focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide.none),
+                                enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        width: 1,
+                                        color: Get.isDarkMode
+                                            ? Colors.white60
+                                            : Colors.grey[600]!)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          InkWell(
+                            onTap: () {
+                              NameServices().setName(_controller.text);
+                              FocusManager.instance.primaryFocus?.unfocus();
+                            },
+                            child: Icon(
+                              Icons.save_outlined,
+                              color: Colors.grey[600],
+                              size: 30,
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 10)
                   ],
