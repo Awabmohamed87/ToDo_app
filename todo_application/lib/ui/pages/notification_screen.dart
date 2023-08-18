@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_application/controllers/task_controller.dart';
 import 'package:todo_application/ui/theme.dart';
 
 import '../../services/name_services.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String payload;
-  const NotificationScreen({Key? key, required this.payload}) : super(key: key);
+  final int? id;
+  const NotificationScreen({Key? key, required this.payload, this.id})
+      : super(key: key);
 
   @override
   _NotificationScreenState createState() => _NotificationScreenState();
@@ -14,11 +20,13 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   String _payload = '';
+  String _title = '';
 
   @override
   void initState() {
     super.initState();
     _payload = widget.payload;
+    _title = _payload.toString().split('|')[0];
   }
 
   Widget createElement({icon, text}) {
@@ -37,6 +45,35 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Provider.of<TaskController>(context, listen: false)
+              .updateTask(widget.id!);
+          setState(() {
+            _title = 'Completing';
+          });
+          Timer(const Duration(milliseconds: 200), () {
+            setState(() {
+              _title = 'Completing.';
+            });
+          });
+          Timer(const Duration(milliseconds: 400), () {
+            setState(() {
+              _title = 'Completing..';
+            });
+          });
+          Timer(const Duration(milliseconds: 600), () {
+            setState(() {
+              _title = 'Completing...';
+            });
+          });
+
+          Timer(const Duration(milliseconds: 1000), () {
+            Get.back();
+          });
+        },
+        child: const Icon(Icons.done_all),
+      ),
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Get.back(),
@@ -46,7 +83,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ),
         backgroundColor: context.theme.colorScheme.background,
-        title: Text(_payload.toString().split('|')[0], style: headingStyle),
+        title: Text(_title, style: headingStyle),
       ),
       body: SafeArea(
         child: Column(
@@ -78,7 +115,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
               margin: const EdgeInsets.only(left: 30, right: 30),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: MyTheme.primaryClr),
+                  color: Provider.of<TaskController>(context)
+                      .tasksList
+                      .firstWhere((element) => element.id == widget.id!)
+                      .color),
               child: SingleChildScrollView(
                 child: Column(
                   children: [

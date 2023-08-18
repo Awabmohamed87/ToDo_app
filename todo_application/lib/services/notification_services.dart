@@ -27,9 +27,9 @@ class NotifyHelper {
         AndroidInitializationSettings('appicon');
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestSoundPermission: false,
-      requestBadgePermission: false,
-      requestAlertPermission: false,
+      requestSoundPermission: true,
+      requestBadgePermission: true,
+      requestAlertPermission: true,
       onDidReceiveLocalNotification: onDidReceiveLocalNotification,
     );
 
@@ -45,10 +45,12 @@ class NotifyHelper {
   void onDidReceiveNotificationResponse(
       NotificationResponse notificationResponse) async {
     final String? payload = notificationResponse.payload;
+
     if (notificationResponse.payload != null) {
       debugPrint('notification payload: $payload');
     }
-    Get.to(NotificationScreen(payload: '$payload'));
+    Get.to(
+        NotificationScreen(payload: '$payload', id: notificationResponse.id!));
   }
 
   Future onDidReceiveLocalNotification(

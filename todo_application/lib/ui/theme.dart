@@ -74,6 +74,15 @@ TextStyle get sideTaskStyle {
   ));
 }
 
+TextStyle get sideMedStyle {
+  return GoogleFonts.lato(
+      textStyle: const TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+    fontSize: 13,
+  ));
+}
+
 TextStyle get titleTaskStyle {
   return GoogleFonts.lato(
       textStyle: const TextStyle(

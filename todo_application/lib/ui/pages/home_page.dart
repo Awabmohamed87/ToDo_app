@@ -9,17 +9,21 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:todo_application/controllers/medicine_controller.dart';
 import 'package:todo_application/controllers/task_controller.dart';
 import 'package:todo_application/services/image_services.dart';
 import 'package:todo_application/services/name_services.dart';
 import 'package:todo_application/services/notification_services.dart';
 import 'package:todo_application/services/theme_services.dart';
+import 'package:todo_application/ui/pages/add_medicine_page.dart';
 import 'package:todo_application/ui/pages/add_task_page.dart';
 import 'package:todo_application/ui/size_config.dart';
 import 'package:todo_application/ui/theme.dart';
 import 'package:todo_application/ui/widgets/button.dart';
 import 'package:todo_application/ui/widgets/task_tile.dart';
+import 'package:todo_application/ui/widgets/medicine_tile.dart';
 
+import '../../models/medicine.dart';
 import '../../models/task.dart';
 
 class HomePage extends StatefulWidget {
@@ -38,6 +42,8 @@ class _HomePageState extends State<HomePage> {
   // ignore: prefer_typing_uninitialized_variables
   var newImage;
   final TextEditingController _controller = TextEditingController();
+  int _selectedIndex = 0;
+  final MedicineController _medicineController = MedicineController();
 
   @override
   void initState() {
@@ -65,7 +71,32 @@ class _HomePageState extends State<HomePage> {
           _createTaskBar(),
           _createDateBar(),
           const SizedBox(height: 8),
-          _showTasks()
+          _selectedIndex == 0 ? _showTasks() : _showMedicines()
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        elevation: 0,
+        currentIndex: _selectedIndex,
+        onTap: (newIndex) {
+          setState(() {
+            _selectedIndex = newIndex;
+          });
+        },
+        backgroundColor: Theme.of(context).colorScheme.background,
+        selectedItemColor: MyTheme.primaryClr,
+        unselectedItemColor: Colors.grey[700],
+        items: [
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.featured_play_list_outlined), label: 'Tasks'),
+          BottomNavigationBarItem(
+              icon: Image.asset(
+                'images/pills-bottle.png',
+                color:
+                    _selectedIndex == 0 ? Colors.grey[700] : MyTheme.primaryClr,
+                width: 30,
+                height: 30,
+              ),
+              label: 'Medicines')
         ],
       ),
     );
@@ -90,141 +121,151 @@ class _HomePageState extends State<HomePage> {
             setState(() {
               _controller.text = NameServices().name;
             });
-            Get.bottomSheet(SingleChildScrollView(
-              child: Container(
-                color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
-                padding: const EdgeInsets.only(top: 5),
-                height: SizeConfig.screenHeight * 0.35,
-                child: Column(
-                  children: [
-                    Flexible(
-                      child: Container(
-                        height: 6,
-                        width: 120,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Get.isDarkMode
-                              ? Colors.grey[600]
-                              : Colors.grey[300],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Stack(
-                      alignment: AlignmentDirectional.bottomCenter,
+            Get.bottomSheet(StatefulBuilder(
+              builder: (BuildContext context,
+                  void Function(void Function()) stateSetter) {
+                return SingleChildScrollView(
+                  child: Container(
+                    color:
+                        Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
+                    padding: const EdgeInsets.only(top: 5),
+                    height: SizeConfig.screenHeight * 0.35,
+                    child: Column(
                       children: [
-                        Center(
-                          child: buildCircleAvatar(
-                              newImage == null
-                                  ? AssetImage(_image)
-                                  : FileImage(newImage),
-                              SizeConfig.screenWidth * 0.2),
-                        ),
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton2(
-                              iconStyleData: IconStyleData(
-                                icon: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey[350],
-                                      borderRadius: BorderRadius.circular(20)),
-                                  child: const Icon(
-                                    Icons.edit,
-                                  ),
-                                ),
-                                iconSize: 25,
-                                iconEnabledColor: Colors.black,
-                              ),
-                              alignment: Alignment.bottomRight,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 1,
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.camera_alt_outlined),
-                                      SizedBox(width: 5),
-                                      Text('Camera')
-                                    ],
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 2,
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons
-                                          .photo_size_select_actual_rounded),
-                                      SizedBox(width: 5),
-                                      Text('Gallery')
-                                    ],
-                                  ),
-                                )
-                              ],
-                              onChanged: (newItem) async {
-                                final pickedImageFile = await picker.pickImage(
-                                    source: newItem == 1
-                                        ? ImageSource.camera
-                                        : ImageSource.gallery,
-                                    imageQuality: 50,
-                                    maxHeight: 300,
-                                    maxWidth: 300);
-                                if (pickedImageFile != null) {
-                                  setState(() {
-                                    newImage = File(pickedImageFile.path);
-                                  });
-                                  ImageServices()
-                                      .saveThemeToBox(pickedImageFile.path);
-                                }
-                                Navigator.of(context).pop();
-                              }),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: SizeConfig.screenWidth * 0.25),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _controller,
-                              textAlign: TextAlign.center,
-                              decoration: InputDecoration(
-                                labelStyle: holderStyle,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: SizeConfig.screenWidth * 0.03),
-                                labelText: 'Name',
-                                focusedBorder: const UnderlineInputBorder(
-                                    borderSide: BorderSide.none),
-                                enabledBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                        width: 1,
-                                        color: Get.isDarkMode
-                                            ? Colors.white60
-                                            : Colors.grey[600]!)),
-                              ),
+                        Flexible(
+                          child: Container(
+                            height: 6,
+                            width: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Get.isDarkMode
+                                  ? Colors.grey[600]
+                                  : Colors.grey[300],
                             ),
                           ),
-                          const SizedBox(width: 5),
-                          InkWell(
-                            onTap: () {
-                              NameServices().setName(_controller.text);
-                              FocusManager.instance.primaryFocus?.unfocus();
-                            },
-                            child: Icon(
-                              Icons.save_outlined,
-                              color: Colors.grey[600],
-                              size: 30,
+                        ),
+                        const SizedBox(height: 10),
+                        Stack(
+                          alignment: AlignmentDirectional.bottomCenter,
+                          children: [
+                            Center(
+                              child: buildCircleAvatar(
+                                  newImage == null
+                                      ? AssetImage(_image)
+                                      : FileImage(newImage),
+                                  SizeConfig.screenWidth * 0.2),
                             ),
-                          )
-                        ],
-                      ),
+                            DropdownButtonHideUnderline(
+                              child: DropdownButton2(
+                                  iconStyleData: IconStyleData(
+                                    icon: Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey[350],
+                                          borderRadius:
+                                              BorderRadius.circular(20)),
+                                      child: const Icon(
+                                        Icons.edit,
+                                      ),
+                                    ),
+                                    iconSize: 25,
+                                    iconEnabledColor: Colors.black,
+                                  ),
+                                  alignment: Alignment.bottomRight,
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 1,
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.camera_alt_outlined),
+                                          SizedBox(width: 5),
+                                          Text('Camera')
+                                        ],
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 2,
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons
+                                              .photo_size_select_actual_rounded),
+                                          SizedBox(width: 5),
+                                          Text('Gallery')
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                  onChanged: (newItem) async {
+                                    final pickedImageFile =
+                                        await picker.pickImage(
+                                            source: newItem == 1
+                                                ? ImageSource.camera
+                                                : ImageSource.gallery,
+                                            imageQuality: 100);
+                                    if (pickedImageFile != null) {
+                                      stateSetter(() {
+                                        newImage = File(pickedImageFile.path);
+                                      });
+                                      setState(() {
+                                        newImage = File(pickedImageFile.path);
+                                      });
+                                      ImageServices()
+                                          .saveThemeToBox(pickedImageFile.path);
+                                    }
+                                    // Navigator.of(context).pop();
+                                  }),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.screenWidth * 0.25),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _controller,
+                                  textAlign: TextAlign.center,
+                                  decoration: InputDecoration(
+                                    labelStyle: holderStyle,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            SizeConfig.screenWidth * 0.03),
+                                    labelText: 'Name',
+                                    focusedBorder: const UnderlineInputBorder(
+                                        borderSide: BorderSide.none),
+                                    enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                            width: 1,
+                                            color: Get.isDarkMode
+                                                ? Colors.white60
+                                                : Colors.grey[600]!)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              InkWell(
+                                onTap: () {
+                                  NameServices().setName(_controller.text);
+                                  FocusManager.instance.primaryFocus?.unfocus();
+                                },
+                                child: Icon(
+                                  Icons.save_outlined,
+                                  color: Colors.grey[600],
+                                  size: 30,
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10)
+                      ],
                     ),
-                    const SizedBox(height: 10)
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ));
           },
           child: buildCircleAvatar(
@@ -269,12 +310,21 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           MyButton(
-              label: '+ Add Task',
-              onTap: () async {
-                await Get.to(() => AddTaskPage(_selectedDate));
-                Provider.of<TaskController>(context, listen: false).getTasks(
-                    selectedDate: DateFormat.yMMMEd().format(_selectedDate));
-              }),
+              label: _selectedIndex == 0 ? '+ Add Task' : '+ Add Medicine',
+              onTap: _selectedIndex == 0
+                  ? () async {
+                      await Get.to(() => AddTaskPage(_selectedDate));
+                      Provider.of<TaskController>(context, listen: false)
+                          .getTasks(
+                              selectedDate:
+                                  DateFormat.yMMMEd().format(_selectedDate));
+                    }
+                  : () async {
+                      await Get.to(() => AddMedicinePage(_selectedDate));
+                      _medicineController.getMedicines(
+                          selectedDate:
+                              DateFormat.yMMMEd().format(_selectedDate));
+                    }),
         ],
       ),
     );
@@ -421,6 +471,7 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: ((context, index) {
                 final task =
                     Provider.of<TaskController>(context).tasksList[index];
+
                 var hour = task.startTime.toString().split(':')[0];
                 var minutes =
                     task.startTime.toString().split(':')[1].split(' ')[0];
@@ -459,6 +510,88 @@ class _HomePageState extends State<HomePage> {
           onRefresh: () async {
             Provider.of<TaskController>(context, listen: false).getTasks();
           },
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            direction: SizeConfig.orientation == Orientation.landscape
+                ? Axis.horizontal
+                : Axis.vertical,
+            children: [
+              SizeConfig.orientation == Orientation.landscape
+                  ? const SizedBox(height: 0)
+                  : const SizedBox(height: 170),
+              SvgPicture.asset(
+                'images/task.svg',
+                // ignore: deprecated_member_use
+                color: MyTheme.primaryClr.withOpacity(0.5),
+                height:
+                    SizeConfig.orientation == Orientation.portrait ? 90 : 65,
+              ),
+              Text(
+                "You don't have any tasks yet! \n Add new tasks to make ur days productive",
+                style: subTitleStyle,
+                textAlign: TextAlign.center,
+              ),
+              SizeConfig.orientation == Orientation.landscape
+                  ? const SizedBox(height: 0)
+                  : const SizedBox(height: 170),
+            ],
+          ),
+        ),
+      ),
+    ]);
+  }
+
+  _showMedicines() {
+    _medicineController.getMedicines(
+        selectedDate: DateFormat.yMMMEd().format(_selectedDate));
+    return Obx(() => _medicineController.medicineList.toList().isEmpty
+        ? _noMedMsg()
+        : Expanded(
+            child: ListView.builder(
+              itemCount: _medicineController.medicineList.toList().length,
+              scrollDirection: SizeConfig.orientation == Orientation.portrait
+                  ? Axis.vertical
+                  : Axis.horizontal,
+              itemBuilder: ((context, index) {
+                var med = _medicineController.medicineList.toList()[index];
+                /*notifyHelper.scheduledNotification(
+                    tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
+                    int.parse(minutes),
+                    task);*/
+                return AnimationConfiguration.staggeredList(
+                  position: index,
+                  duration: const Duration(milliseconds: 300),
+                  child: SlideAnimation(
+                    horizontalOffset: 300,
+                    child: FadeInAnimation(
+                      child: GestureDetector(
+                        child: MedicineTile(medicine: med),
+                        onTap: () {
+                          setState(() {
+                            _showStatefulBottomSheet(context, med);
+                          });
+                          /*setState(() {
+                            _showBottomSheet(context, med);
+                          });*/
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ));
+  }
+
+  _noMedMsg() {
+    return Stack(children: [
+      AnimatedPositioned(
+        duration: const Duration(seconds: 3),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            Provider.of<TaskController>(context, listen: false).getTasks();
+          },
           child: SingleChildScrollView(
             child: Wrap(
               alignment: WrapAlignment.center,
@@ -469,26 +602,106 @@ class _HomePageState extends State<HomePage> {
               children: [
                 SizeConfig.orientation == Orientation.landscape
                     ? const SizedBox(height: 6)
-                    : const SizedBox(height: 200),
+                    : const SizedBox(height: 150),
                 SvgPicture.asset(
-                  'images/task.svg',
+                  'images/positive-thinking.svg',
+
                   // ignore: deprecated_member_use
                   color: MyTheme.primaryClr.withOpacity(0.5),
-                  height: 90,
+                  height:
+                      SizeConfig.orientation == Orientation.portrait ? 130 : 65,
                 ),
                 Text(
-                  "You don't have any tasks yet! \n Add new tasks to make ur days productive",
+                  "You don't have scheduled pills today \n Hope u stay always well",
                   style: subTitleStyle,
                   textAlign: TextAlign.center,
                 ),
                 SizeConfig.orientation == Orientation.landscape
-                    ? const SizedBox(height: 120)
-                    : const SizedBox(height: 180),
+                    ? const SizedBox(height: 0)
+                    : const SizedBox(height: 170),
               ],
             ),
           ),
         ),
       ),
     ]);
+  }
+
+  void _showStatefulBottomSheet(BuildContext context, Medicine medicine) {
+    Get.bottomSheet(StatefulBuilder(
+      builder:
+          (BuildContext context, void Function(void Function()) stateSetter) =>
+              SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.only(top: 4),
+          width: SizeConfig.screenWidth,
+          height: SizeConfig.orientation == Orientation.landscape
+              ? SizeConfig.screenHeight * 0.8
+              : SizeConfig.screenHeight * 0.35,
+          color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
+          child: Column(
+            children: [
+              Flexible(
+                child: Container(
+                  height: 6,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Get.isDarkMode ? Colors.grey[600] : Colors.grey[300],
+                  ),
+                ),
+              ),
+              _buildBottomSheet(
+                  label: 'Mark as Taken',
+                  onTap: () {
+                    setState(() {
+                      _medicineController.updateMedicine(
+                          medicine.id!, medicine.numOfShots! + 1);
+                      medicine.numOfShots = medicine.numOfShots! + 1;
+                      //_medicineController.getNextShotTime(medicine);
+                      Get.back();
+                    });
+                  },
+                  clr: MyTheme.primaryClr),
+              /*medicine.isCompleted == 0
+                  ? _buildBottomSheet(
+                      label: 'Mark as completed',
+                      onTap: () {
+                        setState(() {
+                          Provider.of<TaskController>(context, listen: false)
+                              .updateTask(task.id!);
+
+                          Get.back();
+                        });
+                      },
+                      clr: MyTheme.primaryClr)
+                  : Container(),*/
+              _buildBottomSheet(
+                label: 'Delete',
+                onTap: () {
+                  setState(() {
+                    _medicineController.deleteMedicine(medicine.id!);
+
+                    Get.back();
+                  });
+                },
+                clr: Colors.red[300]!,
+              ),
+              Divider(
+                color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
+              ),
+              _buildBottomSheet(
+                label: 'Cancel',
+                onTap: () {
+                  Get.back();
+                },
+                clr: MyTheme.primaryClr,
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    ));
   }
 }

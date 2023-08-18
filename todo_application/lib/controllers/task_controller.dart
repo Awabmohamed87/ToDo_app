@@ -13,7 +13,8 @@ class TaskController with ChangeNotifier {
 
   getTasks({selectedDate = ''}) async {
     if (selectedDate != '') _selectedDate = selectedDate;
-    final List<Map<String, dynamic>> tasks = await DBHelper.query();
+    final List<Map<String, dynamic>> tasks =
+        await DBHelper.query(DBHelper.tasksTableName);
 
     tasksList = [];
     notifyListeners();
@@ -38,18 +39,18 @@ class TaskController with ChangeNotifier {
   }
 
   addTask(Task task) async {
-    await DBHelper.insert(task);
+    await DBHelper.insert(DBHelper.tasksTableName, task: task);
     print(task.date);
     getTasks();
   }
 
   deleteTask(int id) async {
-    await DBHelper.delete(id);
+    await DBHelper.delete(DBHelper.tasksTableName, id);
     getTasks();
   }
 
   updateTask(int id) async {
-    await DBHelper.update(id);
+    await DBHelper.update(DBHelper.tasksTableName, id);
     getTasks();
   }
 

@@ -16,7 +16,7 @@ class MyButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
             color: MyTheme.primaryClr, borderRadius: BorderRadius.circular(10)),
-        width: 100,
+        width: label == '+ Add Task' ? 100 : 130,
         height: 40,
         child: Text(
           label,

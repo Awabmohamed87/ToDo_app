@@ -48,3 +48,6 @@ flutter:
   assets:
     - images/person.jpeg
     - images/task.svg
+    - images/pills-bottle.png
+    - images/positive-thinking.svg
+    - images/pills.png
