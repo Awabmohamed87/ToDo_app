@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:alarm/alarm.dart';
 import 'package:date_picker_timeline/date_picker_timeline.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,7 @@ import 'package:todo_application/ui/widgets/medicine_tile.dart';
 
 import '../../models/medicine.dart';
 import '../../models/task.dart';
+import '../../services/alarm_services.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -37,7 +40,7 @@ class _HomePageState extends State<HomePage> {
   DateTime _selectedDate = DateTime.now();
   late NotifyHelper notifyHelper;
   bool isPressed = false;
-  final _image = 'images/person.jpeg';
+  final _image = 'assets/images/person.jpeg';
   final ImagePicker picker = ImagePicker();
   // ignore: prefer_typing_uninitialized_variables
   var newImage;
@@ -90,7 +93,7 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(Icons.featured_play_list_outlined), label: 'Tasks'),
           BottomNavigationBarItem(
               icon: Image.asset(
-                'images/pills-bottle.png',
+                'assets/images/pills-bottle.png',
                 color:
                     _selectedIndex == 0 ? Colors.grey[700] : MyTheme.primaryClr,
                 width: 30,
@@ -521,7 +524,7 @@ class _HomePageState extends State<HomePage> {
                   ? const SizedBox(height: 0)
                   : const SizedBox(height: 170),
               SvgPicture.asset(
-                'images/task.svg',
+                'assets/images/task.svg',
                 // ignore: deprecated_member_use
                 color: MyTheme.primaryClr.withOpacity(0.5),
                 height:
@@ -555,10 +558,8 @@ class _HomePageState extends State<HomePage> {
                   : Axis.horizontal,
               itemBuilder: ((context, index) {
                 var med = _medicineController.medicineList.toList()[index];
-                /*notifyHelper.scheduledNotification(
-                    tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
-                    int.parse(minutes),
-                    task);*/
+                AlarmServices.setAlarm(med);
+
                 return AnimationConfiguration.staggeredList(
                   position: index,
                   duration: const Duration(milliseconds: 300),
@@ -604,7 +605,7 @@ class _HomePageState extends State<HomePage> {
                     ? const SizedBox(height: 6)
                     : const SizedBox(height: 150),
                 SvgPicture.asset(
-                  'images/positive-thinking.svg',
+                  'assets/images/positive-thinking.svg',
 
                   // ignore: deprecated_member_use
                   color: MyTheme.primaryClr.withOpacity(0.5),
@@ -627,81 +628,111 @@ class _HomePageState extends State<HomePage> {
     ]);
   }
 
+  String _printDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return '${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds';
+  }
+
   void _showStatefulBottomSheet(BuildContext context, Medicine medicine) {
     Get.bottomSheet(StatefulBuilder(
       builder:
-          (BuildContext context, void Function(void Function()) stateSetter) =>
-              SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.only(top: 4),
-          width: SizeConfig.screenWidth,
-          height: SizeConfig.orientation == Orientation.landscape
-              ? SizeConfig.screenHeight * 0.8
-              : SizeConfig.screenHeight * 0.35,
-          color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
-          child: Column(
-            children: [
-              Flexible(
-                child: Container(
-                  height: 6,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Get.isDarkMode ? Colors.grey[600] : Colors.grey[300],
+          (BuildContext context, void Function(void Function()) stateSetter) {
+        String time = Alarm.getAlarm(medicine.id!) == null
+            ? ''
+            : _printDuration(Alarm.getAlarm(medicine.id!)!
+                .dateTime
+                .difference(DateTime.now()));
+        Timer? timer;
+        if (Alarm.getAlarm(medicine.id!) != null)
+          timer = Timer.periodic(const Duration(seconds: 1), (_) {
+            if (Get.isBottomSheetOpen!) {
+              stateSetter(() {
+                time = Alarm.getAlarm(medicine.id!) == null
+                    ? ''
+                    : Alarm.getAlarm(medicine.id!)!
+                        .dateTime
+                        .difference(DateTime.now())
+                        .toString();
+              });
+            } else {
+              timer!.cancel();
+            }
+          });
+
+        return SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.only(top: 4),
+            width: SizeConfig.screenWidth,
+            height: SizeConfig.orientation == Orientation.landscape
+                ? SizeConfig.screenHeight * 0.8
+                : SizeConfig.screenHeight * 0.35,
+            color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
+            child: Column(
+              children: [
+                Flexible(
+                  child: Container(
+                    height: 6,
+                    width: 120,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color:
+                          Get.isDarkMode ? Colors.grey[600] : Colors.grey[300],
+                    ),
                   ),
                 ),
-              ),
-              _buildBottomSheet(
-                  label: 'Mark as Taken',
-                  onTap: () {
-                    setState(() {
-                      _medicineController.updateMedicine(
-                          medicine.id!, medicine.numOfShots! + 1);
-                      medicine.numOfShots = medicine.numOfShots! + 1;
-                      //_medicineController.getNextShotTime(medicine);
-                      Get.back();
-                    });
-                  },
-                  clr: MyTheme.primaryClr),
-              /*medicine.isCompleted == 0
-                  ? _buildBottomSheet(
-                      label: 'Mark as completed',
-                      onTap: () {
+                _buildBottomSheet(
+                    label: Alarm.getAlarm(medicine.id!) != null
+                        ? 'Time remaining $time'
+                        : 'Mark as Taken',
+                    onTap: () {
+                      if (Alarm.getAlarm(medicine.id!) == null) {
                         setState(() {
-                          Provider.of<TaskController>(context, listen: false)
-                              .updateTask(task.id!);
-
+                          _medicineController.updateMedicine(
+                              medicine.id!, medicine.numOfShots! + 1);
+                          medicine.numOfShots = medicine.numOfShots! + 1;
                           Get.back();
                         });
-                      },
-                      clr: MyTheme.primaryClr)
-                  : Container(),*/
-              _buildBottomSheet(
-                label: 'Delete',
-                onTap: () {
-                  setState(() {
-                    _medicineController.deleteMedicine(medicine.id!);
-
+                        AlarmServices.setAlarm(medicine);
+                        Get.snackbar('',
+                            'Next pill scheduled at ${Alarm.getAlarm(medicine.id!)!.dateTime.toLocal()}',
+                            duration: const Duration(seconds: 5),
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.white,
+                            icon: const Icon(Icons.done),
+                            colorText: MyTheme.primaryClr,
+                            padding: const EdgeInsets.all(8));
+                      }
+                    },
+                    clr: MyTheme.primaryClr),
+                _buildBottomSheet(
+                  label: 'Delete',
+                  onTap: () {
+                    setState(() {
+                      _medicineController.deleteMedicine(medicine.id!);
+                      Get.back();
+                    });
+                    Alarm.stop(medicine.id!);
+                  },
+                  clr: Colors.red[300]!,
+                ),
+                Divider(
+                  color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
+                ),
+                _buildBottomSheet(
+                  label: 'Cancel',
+                  onTap: () {
                     Get.back();
-                  });
-                },
-                clr: Colors.red[300]!,
-              ),
-              Divider(
-                color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
-              ),
-              _buildBottomSheet(
-                label: 'Cancel',
-                onTap: () {
-                  Get.back();
-                },
-                clr: MyTheme.primaryClr,
-              ),
-              const SizedBox(height: 20),
-            ],
+                  },
+                  clr: MyTheme.primaryClr,
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     ));
   }
 }

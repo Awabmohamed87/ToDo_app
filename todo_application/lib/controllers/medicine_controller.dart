@@ -36,6 +36,8 @@ class MedicineController extends GetxController {
         element.endDate != _selectedDate);
   }
 
+  getId() {}
+
   addMedicine(Medicine medicine) async {
     await DBHelper.insert(DBHelper.medicinesTableName, medicine: medicine);
 
@@ -93,5 +95,26 @@ class MedicineController extends GetxController {
       return diff.inDays * 3;
     else
       return diff.inDays * 4;
+  }
+
+  Future<String> getMedicine(int id) async {
+    final List<Map<String, dynamic>> medicines =
+        await DBHelper.query(DBHelper.medicinesTableName);
+    medicineList.assignAll(medicines
+        .map((e) => Medicine(
+            numOfShots: e['numOfShots'],
+            id: e['id'],
+            title: e['title'],
+            note: e['note'],
+            startTime: e['startTime'],
+            color: Color(e['color']),
+            remind: e['remind'],
+            repeat: e['repeat'],
+            endDate: e['endDate'],
+            startDate: e['startDate'],
+            totalNumOfShots: calcTotalNumberOfShots(
+                e['startDate'], e['endDate'], e['repeat'])))
+        .toList());
+    return medicineList.firstWhere((element) => element.id == id).title!;
   }
 }

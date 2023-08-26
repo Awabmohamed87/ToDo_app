@@ -318,7 +318,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
       ),
       actions: const [
         CircleAvatar(
-          backgroundImage: AssetImage('images/person.jpeg'),
+          backgroundImage: AssetImage('assets/images/person.jpeg'),
           radius: 15,
         ),
         SizedBox(width: 10),

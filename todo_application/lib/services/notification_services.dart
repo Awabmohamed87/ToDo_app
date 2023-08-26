@@ -1,3 +1,4 @@
+import 'package:alarm/alarm.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -44,10 +45,11 @@ class NotifyHelper {
 
   void onDidReceiveNotificationResponse(
       NotificationResponse notificationResponse) async {
-    final String? payload = notificationResponse.payload;
-
-    if (notificationResponse.payload != null) {
-      debugPrint('notification payload: $payload');
+    String? payload = notificationResponse.payload;
+    if (payload == '') {
+      print(notificationResponse.id);
+      payload = '1|2|3|';
+      Alarm.stop(notificationResponse.id!);
     }
     Get.to(
         NotificationScreen(payload: '$payload', id: notificationResponse.id!));
@@ -140,7 +142,7 @@ class NotifyHelper {
 
   void _configureSelectNotificationSubject() {
     selectNotificationSubject.stream.listen((String payload) async {
-      debugPrint('My payload is ' + payload);
+      print('My payload is ' + payload);
       await Get.to(() => NotificationScreen(payload: payload));
     });
   }

@@ -29,8 +29,10 @@ dependencies:
   provider:
   image_picker: ^1.0.2
   dropdown_button2: ^2.3.8
+  alarm: ^1.2.1
+  
 
-dev_dependencies:
+dev_dependencies: 
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.13.1
@@ -46,8 +48,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    - images/person.jpeg
-    - images/task.svg
-    - images/pills-bottle.png
-    - images/positive-thinking.svg
-    - images/pills.png
+    - assets/images/person.jpeg
+    - assets/images/task.svg
+    - assets/images/pills-bottle.png
+    - assets/images/positive-thinking.svg
+    - assets/images/pills.png
+    - assets/sound/alarm.mp3

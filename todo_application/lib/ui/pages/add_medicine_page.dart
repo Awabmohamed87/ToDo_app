@@ -30,7 +30,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       .toString();
 
   int _selectedRemind = 0;
-  List<int> remindList = [0, 5, 10, 15, 20];
+  List<int> remindList = [0, 5, 10, 15, 20, 25, 30];
   String _selectedRepeat = 'Every 24 hours';
   List<String> repeatList = [
     'Every 24 hours',
@@ -70,7 +70,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                 controller: _titleController),
             InputField(
                 label: 'Note',
-                note: 'Enter note here..',
+                note: 'Enter note here..(optional)',
                 controller: _noteController),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -311,8 +311,8 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
         remind: _selectedRemind,
         repeat: _selectedRepeat,
         numOfShots: 0);
-
     await medicineController.addMedicine(medicine);
+
     Get.back();
   }
 
@@ -331,7 +331,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       ),
       actions: const [
         CircleAvatar(
-          backgroundImage: AssetImage('images/person.jpeg'),
+          backgroundImage: AssetImage('assets/images/person.jpeg'),
           radius: 15,
         ),
         SizedBox(width: 10),

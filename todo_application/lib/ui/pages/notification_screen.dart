@@ -27,6 +27,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     super.initState();
     _payload = widget.payload;
     _title = _payload.toString().split('|')[0];
+    print(_payload);
   }
 
   Widget createElement({icon, text}) {
@@ -115,10 +116,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
               margin: const EdgeInsets.only(left: 30, right: 30),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Provider.of<TaskController>(context)
+                  color: MyTheme
+                      .primaryClr /*Provider.of<TaskController>(context)
                       .tasksList
                       .firstWhere((element) => element.id == widget.id!)
-                      .color),
+                      .color*/
+                  ),
               child: SingleChildScrollView(
                 child: Column(
                   children: [

@@ -92,7 +92,7 @@ class MedicineTile extends StatelessWidget {
               ),
             ),
             Image.asset(
-              'images/pills.png',
+              'assets/images/pills.png',
               height: 50,
               color: Colors.white60,
             ),
