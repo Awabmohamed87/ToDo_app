@@ -49,6 +49,8 @@ class AlarmServices {
     date = date.add(Duration(
         hours: ((med.numOfShots! % shotsPerDay) * (24 / shotsPerDay)).toInt()));
 
-    return date;
+    return date.subtract(Duration(minutes: med.remind!)).isAfter(DateTime.now())
+        ? date.subtract(Duration(minutes: med.remind!))
+        : date;
   }
 }

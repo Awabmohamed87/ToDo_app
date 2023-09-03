@@ -713,7 +713,7 @@ class _HomePageState extends State<HomePage> {
                       _medicineController.deleteMedicine(medicine.id!);
                       Get.back();
                     });
-                    Alarm.stop(medicine.id!);
+                    Alarm.stopAll();
                   },
                   clr: Colors.red[300]!,
                 ),

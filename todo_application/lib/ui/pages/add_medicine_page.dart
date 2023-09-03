@@ -245,7 +245,8 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                   MyButton(
                       label: 'Add Medicine',
                       onTap: () async {
-                        _validateData();
+                        FocusScope.of(context).unfocus();
+                        _checkStartTime();
                       }),
                 ],
               ),
@@ -253,6 +254,29 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
           ],
         ),
       ),
+    );
+  }
+
+  AppBar _appBar() {
+    return AppBar(
+      backgroundColor: context.theme.colorScheme.background,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(
+          Icons.arrow_back_ios,
+          color: Colors.grey,
+        ),
+        onPressed: () {
+          Get.back();
+        },
+      ),
+      actions: const [
+        CircleAvatar(
+          backgroundImage: AssetImage('assets/images/person.jpeg'),
+          radius: 15,
+        ),
+        SizedBox(width: 10),
+      ],
     );
   }
 
@@ -294,51 +318,6 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
     );
   }
 
-  _validateData() async {
-    if (_titleController.text.isEmpty) {
-      createSnackBox('Required!!', "Title can't be empty");
-      return;
-    }
-
-    Medicine medicine = Medicine(
-        id: 0,
-        title: _titleController.text,
-        note: _noteController.text,
-        startDate: DateFormat.yMMMEd().format(_startDate),
-        endDate: DateFormat.yMMMEd().format(_endDate),
-        startTime: _startTime,
-        color: _selectedColor,
-        remind: _selectedRemind,
-        repeat: _selectedRepeat,
-        numOfShots: 0);
-    await medicineController.addMedicine(medicine);
-
-    Get.back();
-  }
-
-  AppBar _appBar() {
-    return AppBar(
-      backgroundColor: context.theme.colorScheme.background,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back_ios,
-          color: Colors.grey,
-        ),
-        onPressed: () {
-          Get.back();
-        },
-      ),
-      actions: const [
-        CircleAvatar(
-          backgroundImage: AssetImage('assets/images/person.jpeg'),
-          radius: 15,
-        ),
-        SizedBox(width: 10),
-      ],
-    );
-  }
-
   void _getTimeFromUser() async {
     TimeOfDay? _pickedTime = await showTimePicker(
         context: context,
@@ -365,5 +344,92 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
         if (_pickedDate != null) _endDate = _pickedDate;
       }
     });
+  }
+
+  DateTime getNextPillTime(DateTime date, int numOfShots) {
+    int shotsPerDay = 0;
+    if (_selectedRepeat == 'Every 24 hours') {
+      shotsPerDay = 1;
+    } else if (_selectedRepeat == 'Every 12 hours') {
+      shotsPerDay = 2;
+    } else if (_selectedRepeat == 'Every 8 hours') {
+      shotsPerDay = 3;
+    } else {
+      shotsPerDay = 4;
+    }
+
+    date = date.add(Duration(hours: 24 ~/ shotsPerDay));
+
+    return date;
+  }
+
+  int _getNumOfPills(DateTime medDte) {
+    int num = 0;
+    while (medDte.isBefore(DateTime.now())) {
+      medDte = getNextPillTime(medDte, num);
+      num++;
+      print(medDte.toString());
+    }
+    return num;
+  }
+
+  DateTime _toDate(stringDate, String time) {
+    String year = stringDate.split(',')[2];
+    String month = stringDate.split(',')[1].split(' ')[1];
+    String day = stringDate.split(',')[1].split(' ')[2];
+    var dateString = month + ' ' + day + ',' + year + ' ' + time;
+
+    DateFormat format = DateFormat('MMM dd, yyyy hh:mm a');
+    return format.parse(dateString);
+  }
+
+  _checkStartTime() {
+    final DateTime medDate =
+        _toDate(DateFormat.yMMMEd().format(_startDate), _startTime);
+    if (DateTime.now().isAfter(medDate)) {
+      int missedPills = _getNumOfPills(medDate);
+      Get.dialog(AlertDialog(
+        content: Text(
+            'There is $missedPills pill/s date are passed have you taken them?'),
+        actions: [
+          TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _validateData(numOfShotsTaken: missedPills);
+              },
+              child: const Text('Yes')),
+          TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                createSnackBox('Warning', 'Change the time to a coming one');
+              },
+              child: const Text('No!')),
+        ],
+      ));
+    } else {
+      _validateData();
+    }
+  }
+
+  _validateData({numOfShotsTaken = 0}) async {
+    if (_titleController.text.isEmpty) {
+      createSnackBox('Required!!', "Title can't be empty");
+      return;
+    }
+
+    Medicine medicine = Medicine(
+        id: 0,
+        title: _titleController.text,
+        note: _noteController.text,
+        startDate: DateFormat.yMMMEd().format(_startDate),
+        endDate: DateFormat.yMMMEd().format(_endDate),
+        startTime: _startTime,
+        color: _selectedColor,
+        remind: _selectedRemind,
+        repeat: _selectedRepeat,
+        numOfShots: numOfShotsTaken);
+    await medicineController.addMedicine(medicine);
+
+    Get.back();
   }
 }
