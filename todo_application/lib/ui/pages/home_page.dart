@@ -48,6 +48,8 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final MedicineController _medicineController = MedicineController();
 
+  Timer? _remiainingMedicineTimeTimer;
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +62,14 @@ class _HomePageState extends State<HomePage> {
       newImage = File(ImageServices().profileImagePath);
     Provider.of<TaskController>(context, listen: false)
         .getTasks(selectedDate: DateFormat.yMMMEd().format(_selectedDate));
+  }
+
+  @override
+  void dispose() {
+    print('dispose');
+    if (_remiainingMedicineTimeTimer != null)
+      _remiainingMedicineTimeTimer!.cancel();
+    super.dispose();
   }
 
   @override
@@ -474,15 +484,20 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: ((context, index) {
                 final task =
                     Provider.of<TaskController>(context).tasksList[index];
+                notifyHelper.isScheduled(task.id).then((value) {
+                  if (!value) {
+                    var hour = task.startTime.toString().split(':')[0];
+                    var minutes =
+                        task.startTime.toString().split(':')[1].split(' ')[0];
+                    var tmp =
+                        task.startTime.toString().split(':')[1].split(' ')[1];
+                    notifyHelper.scheduledNotification(
+                        tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
+                        int.parse(minutes),
+                        task);
+                  }
+                });
 
-                var hour = task.startTime.toString().split(':')[0];
-                var minutes =
-                    task.startTime.toString().split(':')[1].split(' ')[0];
-                var tmp = task.startTime.toString().split(':')[1].split(' ')[1];
-                notifyHelper.scheduledNotification(
-                    tmp == 'AM' ? int.parse(hour) : int.parse(hour) + 12,
-                    int.parse(minutes),
-                    task);
                 return AnimationConfiguration.staggeredList(
                   position: index,
                   duration: const Duration(milliseconds: 300),
@@ -569,12 +584,11 @@ class _HomePageState extends State<HomePage> {
                       child: GestureDetector(
                         child: MedicineTile(medicine: med),
                         onTap: () {
+                          if (_remiainingMedicineTimeTimer != null)
+                            _remiainingMedicineTimeTimer!.cancel();
                           setState(() {
                             _showStatefulBottomSheet(context, med);
                           });
-                          /*setState(() {
-                            _showBottomSheet(context, med);
-                          });*/
                         },
                       ),
                     ),
@@ -636,103 +650,115 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showStatefulBottomSheet(BuildContext context, Medicine medicine) {
-    Get.bottomSheet(StatefulBuilder(
-      builder:
-          (BuildContext context, void Function(void Function()) stateSetter) {
-        String time = Alarm.getAlarm(medicine.id!) == null
-            ? ''
-            : _printDuration(Alarm.getAlarm(medicine.id!)!
-                .dateTime
-                .difference(DateTime.now()));
-        Timer? timer;
-        if (Alarm.getAlarm(medicine.id!) != null)
-          timer = Timer.periodic(const Duration(seconds: 1), (_) {
-            if (Get.isBottomSheetOpen!) {
-              stateSetter(() {
-                time = Alarm.getAlarm(medicine.id!) == null
-                    ? ''
-                    : Alarm.getAlarm(medicine.id!)!
-                        .dateTime
-                        .difference(DateTime.now())
-                        .toString();
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder:
+            (BuildContext context, void Function(void Function()) stateSetter) {
+          String time = Alarm.getAlarm(medicine.id!) == null
+              ? ''
+              : _printDuration(Alarm.getAlarm(medicine.id!)!
+                  .dateTime
+                  .difference(DateTime.now()));
+          if (Alarm.getAlarm(medicine.id!) != null) {
+            if (medicine.numOfShots! < medicine.totalNumOfShots!) {
+              _remiainingMedicineTimeTimer =
+                  Timer(const Duration(seconds: 1), () {
+                if (Get.isBottomSheetOpen!) {
+                  stateSetter(() {
+                    if (medicine.numOfShots! < medicine.totalNumOfShots!) {
+                      time = Alarm.getAlarm(medicine.id!) == null
+                          ? ''
+                          : Alarm.getAlarm(medicine.id!)!
+                              .dateTime
+                              .difference(DateTime.now())
+                              .toString();
+                    }
+                  });
+                }
               });
-            } else {
-              timer!.cancel();
             }
-          });
+          }
 
-        return SingleChildScrollView(
-          child: Container(
-            padding: const EdgeInsets.only(top: 4),
-            width: SizeConfig.screenWidth,
-            height: SizeConfig.orientation == Orientation.landscape
-                ? SizeConfig.screenHeight * 0.8
-                : SizeConfig.screenHeight * 0.35,
-            color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
-            child: Column(
-              children: [
-                Flexible(
-                  child: Container(
-                    height: 6,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color:
-                          Get.isDarkMode ? Colors.grey[600] : Colors.grey[300],
+          return SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.only(top: 4),
+              width: SizeConfig.screenWidth,
+              height: SizeConfig.orientation == Orientation.landscape
+                  ? SizeConfig.screenHeight * 0.8
+                  : medicine.numOfShots == medicine.totalNumOfShots
+                      ? SizeConfig.screenHeight * 0.25
+                      : SizeConfig.screenHeight * 0.35,
+              color: Get.isDarkMode ? MyTheme.darkHeaderClr : Colors.white,
+              child: Column(
+                children: [
+                  Flexible(
+                    child: Container(
+                      height: 6,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Get.isDarkMode
+                            ? Colors.grey[600]
+                            : Colors.grey[300],
+                      ),
                     ),
                   ),
-                ),
-                _buildBottomSheet(
-                    label: Alarm.getAlarm(medicine.id!) != null
-                        ? 'Time remaining $time'
-                        : 'Mark as Taken',
+                  if (medicine.numOfShots != medicine.totalNumOfShots)
+                    _buildBottomSheet(
+                        label: Alarm.getAlarm(medicine.id!) != null
+                            ? 'Time remaining $time'
+                            : 'Mark as Taken',
+                        onTap: () {
+                          if (medicine.numOfShots == medicine.totalNumOfShots)
+                            return;
+                          if (Alarm.getAlarm(medicine.id!) == null) {
+                            setState(() {
+                              _medicineController.updateMedicine(
+                                  medicine.id!, medicine.numOfShots! + 1);
+                              medicine.numOfShots = medicine.numOfShots! + 1;
+                              Get.back();
+                            });
+                            AlarmServices.setAlarm(medicine);
+                            Get.snackbar('',
+                                'Next pill scheduled at ${Alarm.getAlarm(medicine.id!)!.dateTime.toLocal()}',
+                                duration: const Duration(seconds: 5),
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.white,
+                                icon: const Icon(Icons.done),
+                                colorText: MyTheme.primaryClr,
+                                padding: const EdgeInsets.all(8));
+                          }
+                        },
+                        clr: MyTheme.primaryClr),
+                  _buildBottomSheet(
+                    label: 'Delete',
                     onTap: () {
-                      if (Alarm.getAlarm(medicine.id!) == null) {
-                        setState(() {
-                          _medicineController.updateMedicine(
-                              medicine.id!, medicine.numOfShots! + 1);
-                          medicine.numOfShots = medicine.numOfShots! + 1;
-                          Get.back();
-                        });
-                        AlarmServices.setAlarm(medicine);
-                        Get.snackbar('',
-                            'Next pill scheduled at ${Alarm.getAlarm(medicine.id!)!.dateTime.toLocal()}',
-                            duration: const Duration(seconds: 5),
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.white,
-                            icon: const Icon(Icons.done),
-                            colorText: MyTheme.primaryClr,
-                            padding: const EdgeInsets.all(8));
-                      }
+                      setState(() {
+                        _medicineController.deleteMedicine(medicine.id!);
+                        Get.back();
+                      });
+                      Alarm.stopAll();
                     },
-                    clr: MyTheme.primaryClr),
-                _buildBottomSheet(
-                  label: 'Delete',
-                  onTap: () {
-                    setState(() {
-                      _medicineController.deleteMedicine(medicine.id!);
+                    clr: Colors.red[300]!,
+                  ),
+                  Divider(
+                    color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
+                  ),
+                  _buildBottomSheet(
+                    label: 'Cancel',
+                    onTap: () {
+                      _remiainingMedicineTimeTimer!.cancel();
                       Get.back();
-                    });
-                    Alarm.stopAll();
-                  },
-                  clr: Colors.red[300]!,
-                ),
-                Divider(
-                  color: Get.isDarkMode ? Colors.grey : MyTheme.darkGreyClr,
-                ),
-                _buildBottomSheet(
-                  label: 'Cancel',
-                  onTap: () {
-                    Get.back();
-                  },
-                  clr: MyTheme.primaryClr,
-                ),
-                const SizedBox(height: 20),
-              ],
+                    },
+                    clr: MyTheme.primaryClr,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ));
+          );
+        },
+      ),
+    );
   }
 }

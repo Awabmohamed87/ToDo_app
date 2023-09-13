@@ -5,6 +5,7 @@ import '../models/medicine.dart';
 
 class AlarmServices {
   static void setAlarm(Medicine med) async {
+    if (med.numOfShots == med.totalNumOfShots) return;
     var dateTime = _toDate(med.startDate, med.startTime!);
 
     var pillTime = getNextPillTime(med, dateTime);

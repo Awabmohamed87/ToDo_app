@@ -43,6 +43,12 @@ class NotifyHelper {
         onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
   }
 
+  Future<bool> isScheduled(id) async {
+    final List<PendingNotificationRequest> pendingNotificationRequests =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    return pendingNotificationRequests.any((element) => element.id == id);
+  }
+
   void onDidReceiveNotificationResponse(
       NotificationResponse notificationResponse) async {
     String? payload = notificationResponse.payload;

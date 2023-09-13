@@ -105,7 +105,9 @@ class MedicineTile extends StatelessWidget {
             RotatedBox(
               quarterTurns: 3,
               child: Text(
-                '${medicine.numOfShots}/${medicine.totalNumOfShots} pills taken!',
+                medicine.numOfShots == medicine.totalNumOfShots
+                    ? 'Completed'
+                    : '${medicine.numOfShots}/${medicine.totalNumOfShots} pills taken!',
                 style: sideMedStyle,
               ),
             ),
