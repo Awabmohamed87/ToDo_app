@@ -22,5 +22,5 @@ Basicly it's a simple todo app that comes with some features.
 
 | Night mode          |  Medicine time remaining | Change name and photo |
 :-------------------------:|:-------------------------:|:-------------------------:
- ![pic6](https://github.com/Awabmohamed87/ToDo_app/blob/4ba382a4919789f418ebe0b2910c207304ab0bb7/ScreenShots/Screenshot_1695174092.png)  | ![pic7](https://github.com/Awabmohamed87/ToDo_app/blob/4ba382a4919789f418ebe0b2910c207304ab0bb7/ScreenShots/Screenshot_1695174092.png) | ![pic8](https://github.com/Awabmohamed87/ToDo_app/blob/4ba382a4919789f418ebe0b2910c207304ab0bb7/ScreenShots/Screenshot_1695174096.png) 
+ ![pic6](https://github.com/Awabmohamed87/ToDo_app/blob/4ba382a4919789f418ebe0b2910c207304ab0bb7/ScreenShots/Screenshot_1695174092.png)  | ![pic7](https://github.com/Awabmohamed87/ToDo_app/blob/44df96fc39af305cdfa94f86a22d68a4493f344c/ScreenShots/Screenshot_1695175791.png) | ![pic8](https://github.com/Awabmohamed87/ToDo_app/blob/4ba382a4919789f418ebe0b2910c207304ab0bb7/ScreenShots/Screenshot_1695174096.png) 
  
